@@ -30,6 +30,18 @@ def get_velo_points(raw_data, frame_idx):
     return points
 
 
+def crop_bottom(img):
+    size = (352, 1216)
+    
+    h = img.shape[0]
+    w = img.shape[1]
+    th, tw = size
+    i = h - th
+    j = int(round((w - tw) / 2.))
+
+    return img[i:i + th, j:j + tw, :]
+
+
 def main():
     ##############################
     # Options
@@ -38,8 +50,8 @@ def main():
     Demo to show depth completed point clouds
     """
 
-    raw_dir = os.path.expanduser('~/Kitti/raw')
-    drive_id = '2011_09_26_drive_0023_sync'
+    raw_dir = os.path.expanduser('/local-scratch/hadi/datasets/kitti_raw')
+    drive_id = '2011_09_26_drive_0001_sync'
 
     vtk_window_size = (1280, 720)
     max_fps = 30.0
@@ -58,8 +70,9 @@ def main():
     # Check that velo length matches timestamps?
     if len(raw_data.velo_files) != len(raw_data.timestamps):
         raise ValueError('velo files and timestamps have different length!')
-
-    frame_range = (0, len(raw_data.timestamps))
+    
+    offset = 5
+    frame_range = (offset, len(raw_data.timestamps))
 
     ##############################
 
@@ -72,7 +85,7 @@ def main():
     # Setup camera
     current_cam = vtk_renderer.GetActiveCamera()
     current_cam.SetViewUp(0, 0, 1)
-    current_cam.SetPosition(0.0, -8.0, -15.0)
+    current_cam.SetPosition(0.0, -10.0, -15.0)
     current_cam.SetFocalPoint(0.0, 0.0, 20.0)
     current_cam.Zoom(0.7)
 
@@ -110,6 +123,7 @@ def main():
         load_start_time = time.time()
 
         rgb_image = np.asarray(raw_data.get_cam2(frame_idx))
+        # rgb_image = crop_bottom(rgb_image)
         bgr_image = rgb_image[..., ::-1]
 
         if point_cloud_source == 'lidar':
@@ -136,10 +150,14 @@ def main():
             point_colours = bgr_image[points_in_img_int_valid[1], points_in_img_int_valid[0]]
 
         elif point_cloud_source == 'depth':
-            depth_maps_dir = core.data_dir() + \
-                '/depth_completion/raw/{}/depth_02_{}'.format(drive_id, fill_type)
-            depth_map_path = depth_maps_dir + '/{:010d}.png'.format(frame_idx)
+            # depth_maps_dir = core.data_dir() + \
+            #      '/results/{}/depth_02_{}'.format(drive_id, fill_type)
+            depth_maps_dir = '/local-scratch/hadi/projects/PENet_ICRA2021/results/2011_09_26_drive_0001_sync'
+            # depth_maps_dir = '/local-scratch/hadi/datasets/kitti_depth/depth/data_depth_annotated/train/2011_09_26_drive_0001_sync/proj_depth/groundtruth/image_02'
+            # depth_maps_dir = '/local-scratch/hadi/datasets/kitti_depth/depth/data_depth_velodyne/train/2011_09_26_drive_0001_sync/proj_depth/velodyne_raw/image_02'
+            depth_map_path = depth_maps_dir + '/{:010d}.png'.format(frame_idx - offset) # -offset
             depth_map = depth_map_utils.read_depth_map(depth_map_path)
+            print('$'*10, np.min(depth_map), np.max(depth_map))
             cam0_curr_pc = depth_map_utils.get_depth_point_cloud(depth_map, cam_p)
 
             point_colours = bgr_image.reshape(-1, 3)

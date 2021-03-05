@@ -21,8 +21,8 @@ def main():
     # Options
     ##############################
 
-    kitti_raw_dir = os.path.expanduser('~/Kitti/raw')
-    drive_id = '2011_09_26_drive_0023_sync'
+    kitti_raw_dir = os.path.expanduser('/local-scratch/hadi/datasets/kitti_raw')
+    drive_id = '2011_09_26_drive_0001_sync'
     # drive_id = '2011_09_26_drive_0039_sync'
 
     raw_data = raw_utils.get_raw_data(drive_id, kitti_raw_dir)
@@ -32,7 +32,7 @@ def main():
 
     save_depth_maps = True
 
-    out_depth_map_dir = core.data_dir() + '/depth_completion/raw/{}/depth_02_{}'.format(
+    out_depth_map_dir = core.data_dir() + '/results/{}/depth_02_{}'.format(
         drive_id, fill_type)
 
     ##############################
